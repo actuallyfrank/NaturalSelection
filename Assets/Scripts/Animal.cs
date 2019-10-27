@@ -1,22 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
 public partial class Animal : MonoBehaviour, IAnimal
 {
     public float EnergyLevel = 100;
-    [Range(0, 1f)]
-    public float Fertility = 0.1f;
     [Range(0.3f, 2f)]
     public float MovementSpeed = 1;
 
-    private NavMeshAgent navMeshAgent;
-    private FieldOfView fieldOfView;
+    public NavMeshAgent NavMeshAgent { get; private set; }
+    public FieldOfView FieldOfView { get; private set; }
 
     protected virtual void OnEnable()
     {
-        navMeshAgent = GetComponent<NavMeshAgent>();
-        fieldOfView = GetComponent<FieldOfView>();
+        NavMeshAgent = GetComponent<NavMeshAgent>();
+        FieldOfView = GetComponent<FieldOfView>();
 
         StartCoroutine(UpdateBehaviourWithDelay(1f));
     }
@@ -37,27 +36,32 @@ public partial class Animal : MonoBehaviour, IAnimal
 
     protected virtual void UpdateBehaviour()
     {
-        if (fieldOfView.visibleTargets.Count > 0)
+        if (FieldOfView.visibleTargets.Count > 0 && Fertile)
         {
-            Transform target = fieldOfView.visibleTargets[0].transform;
+            Transform target = FieldOfView.visibleTargets[0].transform;
             SetNewTargetLocation(Vector3.MoveTowards(transform.position, target.position, MovementSpeed));
             AttemptMatingWithTarget(target.gameObject);
         }
         else
         {
-            SetNewTargetLocation(transform.position + Random.insideUnitSphere * MovementSpeed);
+            Vector3 randomOffset = UnityEngine.Random.insideUnitSphere * MovementSpeed;
+            if (randomOffset.magnitude > 0.2f)
+                SetNewTargetLocation(transform.position + randomOffset);
         }        
     }
 
     protected virtual void SetNewTargetLocation(Vector3 targetLocation)
     {
-        if (navMeshAgent != null)
-            navMeshAgent.SetDestination(targetLocation);
+        if (NavMeshAgent != null)
+            NavMeshAgent.SetDestination(targetLocation);
+        DecreaseEnergy(Vector3.Distance(transform.position, targetLocation));
     }
 
     protected virtual void IncreaseEnergy(float amount)
     {
         EnergyLevel += amount;
+        if (EnergyLevel > 100)
+            EnergyLevel = 100;
     }
 
     protected virtual void DecreaseEnergy(float amount)

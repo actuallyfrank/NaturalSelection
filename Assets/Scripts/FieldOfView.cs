@@ -37,11 +37,11 @@ public class FieldOfView : MonoBehaviour
         for (int i = 0; i < targetsInViewRadius.Length; i++)
         {
             Transform target = targetsInViewRadius[i].transform;
-
-            if (!target.GetComponent<Bunny>() || target == transform) continue;
+            if (target.IsChildOf(transform)) continue;
 
             Vector3 dirToTarget = (target.position - transform.position).normalized;
-            if (Vector3.Angle(transform.forward, dirToTarget) < viewAngle / 2)
+            if (Vector3.Angle(transform.forward, dirToTarget) < viewAngle / 2 &&
+                (target.GetComponent<Animal>() || target.GetComponent<Food>()))
             {
                 float dstToTarget = Vector3.Distance(transform.position, target.position);
 
